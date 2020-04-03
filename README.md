@@ -1,4 +1,4 @@
-# Data Mining Technique's on COVID-19: Corona Spreading and Recovery
+# Data Mining Techniques on COVID-19: Corona Spreading and Recovery
 With corona virus spreading quickly, we need a scalable solution that tracks realtime COVID-19 outbreak serving the users and the government. We use user generated real time data to track and predict further developments of the coronavirus. This concerns a number of Amsterdam startups that have joint forces and collaborate with the City of Amsterdam and VU University Amsterdam.
 
 ## Dependencies
