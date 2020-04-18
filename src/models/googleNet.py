@@ -1,4 +1,5 @@
 from keras.layers import Input, Convolution2D, MaxPooling2D, BatchNormalization
+from keras.layers import Concatenate
 from keras.models import Model
 
 
