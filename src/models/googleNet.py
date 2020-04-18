@@ -1,6 +1,6 @@
-from keras.layers import Input, Convolution2D, MaxPooling2D, BatchNormalization, Conv2D
-from keras.layers import Concatenate
+from keras.layers import Input, Convolution2D, MaxPooling2D, BatchNormalization
 from keras.models import Model
+
 
 class GoogleNet(object):
     def __init__(self):
