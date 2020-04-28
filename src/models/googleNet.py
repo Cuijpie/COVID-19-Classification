@@ -22,9 +22,9 @@ class GoogleNet(object):
         self.__inception_5a = [256, (160, 320), (32, 128), 128]
         self.__inception_5b = [384, (192, 384), (48, 128), 128]
 
-        self.__create_model()
+        self.model = self.__create_model()
 
-    def __create_model(self) -> None:
+    def __create_model(self) -> Model:
         input_layer = Input(shape=(224, 224, 3))
 
         layer = Convolution2D(filters=64, kernel_size=7, strides=2, padding='same', activation='relu')(input_layer)
@@ -59,7 +59,7 @@ class GoogleNet(object):
         layer = Dropout(0.4)(layer)
         softmax_2 = Dense(units=1000, activation='softmax', name="softmax_2")(layer)
 
-        self.model = Model(input_layer, [softmax_0, softmax_1, softmax_2])
+        return Model(input_layer, [softmax_0, softmax_1, softmax_2])
 
     def __inception_layer(self, prev_layer, filters) -> Concatenate:
         conv1x1 = Convolution2D(filters[0], kernel_size=1, strides=1, padding='same', activation='relu')(prev_layer)
