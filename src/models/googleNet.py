@@ -11,6 +11,10 @@ from keras.models import Model
 
 
 class GoogleNet(object):
+    """"
+        Implementation based on: https://arxiv.org/pdf/1409.4842.pdf
+        GoogleNet, also referred to as InceptionV1
+    """
     def __init__(self) -> None:
         self.__inception_3a = [64, (96, 128), (16, 32), 32]
         self.__inception_3b = [128, (128, 192), (32, 96), 64]
@@ -31,7 +35,7 @@ class GoogleNet(object):
         layer = MaxPooling2D(pool_size=(3, 3), strides=2, padding='same')(layer)
         layer = BatchNormalization()(layer)
 
-        layer = Convolution2D(filters=64, kernel_size=1, strides=1, padding='same', activation='relu')(layer)
+        layer = Convolution2D(filters=64, kernel_size=1, strides=1, padding='valid', activation='relu')(layer)
         layer = Convolution2D(filters=192, kernel_size=3, strides=1, padding='same', activation='relu')(layer)
         layer = BatchNormalization()(layer)
 
@@ -73,6 +77,7 @@ class GoogleNet(object):
         max3x3_conv1x1 = MaxPooling2D(pool_size=(3, 3), strides=1, padding='same')(prev_layer)
         max3x3_conv1x1 = Convolution2D(filters[3], kernel_size=1, strides=1, padding='same', activation='relu')(max3x3_conv1x1)
 
+        print([conv1x1, conv1x1_conv3x3, conv1x1_conv5x5, max3x3_conv1x1])
         return Concatenate(axis=-1)([conv1x1, conv1x1_conv3x3, conv1x1_conv5x5, max3x3_conv1x1])
 
     def __softmax_layer(self, prev_layer, name) -> Dense:

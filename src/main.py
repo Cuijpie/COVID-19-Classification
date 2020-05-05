@@ -1,10 +1,10 @@
 from models.googleNet import GoogleNet
-
+from models.denseNet import DenseNet
 
 def main() -> None:
-    model = GoogleNet()
-    model.model.summary()
+    model = DenseNet()
 
+    model.model.summary()
 
 
 if __name__ == "__main__":
