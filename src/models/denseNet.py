@@ -25,7 +25,7 @@ class DenseNet(object):
 
         self.model = self.__create_model()
 
-    def __compute_dense_layers(self, bottleneck, depth, dense_blocks):
+    def __compute_dense_layers(self, bottleneck, depth, dense_blocks) -> list:
         if bottleneck:
             dense_layers = (depth - (dense_blocks - 1)) / dense_blocks // 2
         else:
@@ -51,7 +51,7 @@ class DenseNet(object):
 
         return Model(input_layer, output_layer)
 
-    def __classification_layer(self, prev_layer):
+    def __classification_layer(self, prev_layer) -> Dense:
         layer = BatchNormalization()(prev_layer)
         layer = Activation('relu')(layer)
         layer = GlobalAveragePooling2D()(layer)
@@ -60,7 +60,7 @@ class DenseNet(object):
 
         return layer
 
-    def __transition_layer(self, prev_layer, number_of_filters):
+    def __transition_layer(self, prev_layer, number_of_filters) -> AveragePooling2D:
         layer = BatchNormalization()(prev_layer)
         layer = Activation('relu')(layer)
         layer = Convolution2D(filters=int(number_of_filters * self.__compression_factor), kernel_size=1, padding='same')(layer)
@@ -79,7 +79,7 @@ class DenseNet(object):
 
         return layer
 
-    def __dense_block(self, layer, dense_layers, number_of_filters):
+    def __dense_block(self, layer, dense_layers, number_of_filters) -> [Concatenate, int]:
         layers = [layer]
 
         for i in range(dense_layers):
