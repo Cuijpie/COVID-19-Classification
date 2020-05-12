@@ -1,3 +1,5 @@
+#tensorflow2.1.0
+#keras2.3.1
 from data_augmentation import *
 from models.googleNet import GoogleNet
 from sklearn.metrics import classification_report
