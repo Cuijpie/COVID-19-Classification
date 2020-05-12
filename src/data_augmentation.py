@@ -50,7 +50,7 @@ print(data.shape[1:], labels.shape[0])
 # print(labels[0])
 
 (trainX, testX, trainY, testY) = train_test_split(data, labels,
-	test_size=0.25, random_state=42)
+	test_size=0.3, random_state=42)
 
 aug = ImageDataGenerator(rotation_range=20,
                          zoom_range=0.15,
