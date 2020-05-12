@@ -42,7 +42,8 @@ print('number of images in data:',len(data))
 print('number of labels: ',len(labels))
 
 data = np.array(data, dtype="float") / 255.0
-labels = LabelEncoder().fit_transform(labels)
+le=LabelEncoder()
+labels = le.fit_transform(labels)
 labels = np_utils.to_categorical(labels, 2)
 print(data.shape[1:], labels.shape[0])
 # print(data[0])
