@@ -1,12 +1,9 @@
 #tensorflow2.1.0
 #keras2.3.1
 from data_augmentation import *
-from models.googleNet import GoogleNet
 from sklearn.metrics import classification_report
-from keras.optimizers import SGD
 import matplotlib.pyplot as plt
 from tensorflow import keras
-import tensorflow as tf
 from keras.applications import MobileNetV2
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout, Flatten
 from keras.models import Sequential
@@ -18,15 +15,14 @@ opt=keras.optimizers.Adam(learning_rate=0.01)
 # opt = SGD(lr=1e-2, momentum=0.9, decay=1e-2 / EPOCHS)
 
 #MobileNet
-base_model = MobileNetV2(input_shape =  data.shape[1:],
-                                 include_top = False, weights = None)
+base_model = MobileNetV2(input_shape=data.shape[1:], include_top=False, weights=None)
 model = Sequential()
 model.add(base_model)
 model.add(GlobalAveragePooling2D())
 model.add(Dropout(0.5))
 model.add(Dense(512))
 model.add(Dropout(0.5))
-model.add(Dense(labels.shape[1], activation = 'sigmoid'))
+model.add(Dense(labels.shape[1], activation='sigmoid'))
 model.summary()
 
 model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
