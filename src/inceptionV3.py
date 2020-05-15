@@ -2,25 +2,29 @@ from sklearn.metrics import classification_report
 from data_augmentation import *
 import matplotlib.pyplot as plt
 from keras.applications import InceptionV3
-from keras.layers import GlobalAveragePooling2D, Dense
+from keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization
 from keras.models import Model
 
-BATCH_SIZE = 8
-EPOCHS = 50
+BATCH_SIZE = 64
+EPOCHS = 10
 CLASSES = 2
 
 base_model = InceptionV3(weights='imagenet', include_top=False)
 x = base_model.output
+x = Dropout(0.5)(x)
 x = GlobalAveragePooling2D()(x)
-preds = Dense(CLASSES, activation='softmax')(x)  # final layer with softmax activation
-
-model = Model(inputs=base_model.input, outputs=preds)
+x = Dense(128, activation='relu')(x)
+x = BatchNormalization()(x)
+predictions = Dense(2, activation='sigmoid')(x)
+model = Model(inputs=base_model.input, outputs=predictions)
 
 # transfer learning
 for layer in base_model.layers:
     layer.trainable = False
 
-model.compile(loss="categorical_crossentropy", optimizer='adam', metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy",
+              optimizer='adam',
+              metrics=["accuracy"])
 
 # train the network
 print("[INFO] training network...")
