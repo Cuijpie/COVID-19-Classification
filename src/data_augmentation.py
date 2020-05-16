@@ -42,14 +42,14 @@ print('number of images in data:',len(data))
 print('number of labels: ',len(labels))
 
 data = np.array(data, dtype="float") / 255.0
-le=LabelEncoder()
+le = LabelEncoder()
 labels = le.fit_transform(labels)
 labels = np_utils.to_categorical(labels, 2)
 print(data.shape[1:], labels.shape[0])
 # print(data[0])
 # print(labels[0])
 
-(trainX, testX, trainY, testY) = train_test_split(data, labels,
+(trainX, testX, trainY, testY) = train_test_split(data, labels,shuffle=True,
 	test_size=0.3, random_state=42)
 
 aug = ImageDataGenerator(rotation_range=20,
