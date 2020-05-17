@@ -5,9 +5,10 @@ from keras.optimizers import Adam
 from keras.applications import InceptionV3
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization, Flatten
 from keras.models import Model
-import numpy as np
+from keras import backend as K
 
-BATCH_SIZE = 64
+
+BATCH_SIZE = 16
 EPOCHS = 50
 
 base_model = InceptionV3(weights='imagenet', include_top=False)
@@ -16,42 +17,61 @@ x = Dropout(0.5)(x)
 x = GlobalAveragePooling2D()(x)
 x = Dense(128, activation='relu')(x)
 x = BatchNormalization()(x)
-predictions = Dense(3, activation='softmax')(x)
+predictions = Dense(2, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
+
+
+def recall_m(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
+
+
+def precision_m(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
+
+
+def f1_m(y_true, y_pred):
+    precision = precision_m(y_true, y_pred)
+    recall = recall_m(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+
 
 # transfer learning
 for layer in base_model.layers:
     layer.trainable = False
 
-opt = Adam(lr=0.001)
+opt = Adam(lr=0.0001)
 
 model.compile(loss="categorical_crossentropy",
               optimizer=opt,
-              metrics=["accuracy"])
+              metrics=['acc', f1_m, precision_m, recall_m])
 
 # train the network
 print("[INFO] training network...")
-H = model.fit_generator(
-    train_generator,
-    steps_per_epoch=2000 // BATCH_SIZE,
-    epochs=EPOCHS,#
-    validation_data=validation_generator,
-    validation_steps=800 // BATCH_SIZE)
+
+class_weight = {
+    0: 95,
+    1: 5
+}
+
+H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BATCH_SIZE),
+                        validation_data=(testX, testY),
+                        steps_per_epoch=len(trainX) // BATCH_SIZE,
+                        epochs=EPOCHS,
+                        class_weight=class_weight)
+
 
 model.save_weights('test_inception.h5')
 
 #model.load_weights('test_inception.h5')
 
-probabilities = model.predict_generator(generator, 1607)
-
-y_true = validation_generator.classes
-y_pred = np.argmax(probabilities, axis=1)
-
-print('Confusion Matrix')
-cm = confusion_matrix(y_true, y_pred)
-print(cm)
-print('Classification Report')
-print(classification_report(y_true, y_pred, target_names=['COVID', 'NORMAL', 'PNEUMONIA']))
+predictions = model.predict(testX, batch_size=BATCH_SIZE)
+print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=le.classes_))
 
 #plt.figure()
 #plt.ylabel("Loss (training and validation)")
