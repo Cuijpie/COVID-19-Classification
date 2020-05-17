@@ -6,6 +6,14 @@ from keras.utils import np_utils
 from imutils import paths
 import numpy as np
 import cv2
+
+from sklearn.ensemble import RandomForestClassifier
+from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import LabelBinarizer
+from tensorflow.keras.utils import to_categorical
+
+import sys
+np.set_printoptions(threshold=sys.maxsize)
 matplotlib.use("Agg")
 
 dir = './data'
@@ -27,7 +35,9 @@ def loop_img(imagePaths, dirName):
     for imagePath in imagePaths:
         label = dirName
         image = cv2.imread(imagePath)
-        image = cv2.resize(image, (224, 224))#image risize
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, (224, 224))
+
         data.append(image)
         labels.append(label)
 
@@ -41,18 +51,25 @@ print('number of images in data:', len(data))
 print('number of labels: ', len(set(labels)))
 
 data = np.array(data, dtype="float") / 255.0
-le = LabelEncoder()
-labels = le.fit_transform(labels)
-labels = np_utils.to_categorical(labels, 2)
-print(data.shape[1:], labels.shape[0])
+labels = np.array(labels)
+
+lb = LabelBinarizer()
+labels = lb.fit_transform(labels)
+labels = to_categorical(labels)
 
 
-(trainX, testX, trainY, testY) = train_test_split(data, labels, shuffle=True, test_size=0.3, random_state=42)
+(trainX, testX, trainY, testY) = train_test_split(data, labels, stratify=labels, test_size=0.3, random_state=42)
+
+trainX = trainX.reshape(trainX.shape[0], -1)
+
+sm = SMOTE(random_state=12)
+trainX_res, trainY_res = sm.fit_resample(trainX, trainY[:, 0])
+
+clf_rf = RandomForestClassifier(n_estimators=25, random_state=12)
+clf_rf.fit(trainX_res, trainY_res)
+
+trainY_res = [[i, 1. - i] for i in trainY_res]
+trainX_res = trainX_res.reshape(trainX_res.shape[0], 224, 224, 3)
 
 aug = ImageDataGenerator(rotation_range=10,
-                         zoom_range=0.15,
-                         width_shift_range=0.1,
-                         height_shift_range=0.1,
-                         shear_range=0.15,
-                         horizontal_flip=True,
                          fill_mode="nearest")
