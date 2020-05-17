@@ -5,6 +5,7 @@ from keras.optimizers import Adam
 from keras.optimizers import SGD
 from keras.optimizers import RMSprop
 from keras.applications import InceptionV3
+from keras.applications import VGG19
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization, Flatten
 from keras.models import Model
 
@@ -12,7 +13,8 @@ from keras.models import Model
 BATCH_SIZE = 8
 EPOCHS = 50
 
-base_model = InceptionV3(weights='imagenet', include_top=False)
+#base_model = InceptionV3(weights='imagenet', include_top=False)
+base_model = VGG19(weights='imagenet', include_top=False)
 x = base_model.output
 #0.7
 x = Dropout(0.7)(x)
@@ -36,7 +38,6 @@ model.compile(loss="categorical_crossentropy",
 # train the network
 print("[INFO] training network...")
 
-# 0: 50, 1: 10
 class_weight = {
     0: 50,
     1: 1
@@ -54,6 +55,10 @@ model.save_weights('test_inception.h5')
 #model.load_weights('86-98f1_inception.h5')
 
 predictions = model.predict(testX, batch_size=BATCH_SIZE)
+
+y_pred = np.argmax(predictions, axis=1)
+
+print(confusion_matrix(testY.argmax(axis=1), predictions.argmax(axis=1)))
 print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=lb.classes_))
 
 #plt.figure()
