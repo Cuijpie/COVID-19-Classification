@@ -1,77 +1,82 @@
-
-from sklearn.metrics import classification_report, confusion_matrix
+from keras.callbacks import ModelCheckpoint
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, roc_auc_score, auc
 from data_augmentation import *
 from keras.optimizers import Adam
 from keras.optimizers import SGD
-from keras.optimizers import RMSprop
+from keras.applications import InceptionResNetV2
 from keras.applications import InceptionV3
-from keras.applications import VGG19
-from keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization, Flatten
+from keras.applications import DenseNet201
+from keras.applications import ResNet101V2
+from keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization
 from keras.models import Model
+from tensorflow.keras import regularizers
+import matplotlib.pyplot as plt
 
-#8
-BATCH_SIZE = 8
-EPOCHS = 50
+BATCH_SIZE = 10
+EPOCHS = 100
+INIT_LR = 0.0001
 
-#base_model = InceptionV3(weights='imagenet', include_top=False)
-base_model = VGG19(weights='imagenet', include_top=False)
+base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 x = base_model.output
-#0.7
-x = Dropout(0.7)(x)
+# 0.7
+x = Dropout(0.5)(x)
 x = GlobalAveragePooling2D()(x)
-x = Dense(128, activation='relu')(x)
+x = Dense(128, activation='relu', activity_regularizer=regularizers.l1_l2(l1=0.001, l2=0.001))(x)
 x = BatchNormalization()(x)
-predictions = Dense(2, activation='softmax')(x)
+predictions = Dense(units=2,
+                    activity_regularizer=regularizers.l1_l2(l1=0.001, l2=0.001),
+                    activation='softmax')(x)
+
 model = Model(inputs=base_model.input, outputs=predictions)
 
 # transfer learning
 for layer in base_model.layers:
     layer.trainable = False
 
-#sgd
-opt = Adam()
+opt = SGD(lr=INIT_LR, momentum=0.5)
 
-model.compile(loss="categorical_crossentropy",
+model.compile(loss="binary_crossentropy",
               optimizer=opt,
               metrics=['acc'])
 
 # train the network
 print("[INFO] training network...")
 
-class_weight = {
-    0: 50,
-    1: 1
-}
-
 H = model.fit_generator(aug.flow(trainX_res, trainY_res, batch_size=BATCH_SIZE),
                         validation_data=(testX, testY),
-                        steps_per_epoch=len(trainX) // BATCH_SIZE,
                         epochs=EPOCHS,
-                        class_weight=class_weight)
+                        callbacks=[
+                            ModelCheckpoint('InceptionV3.h5',
+                                            monitor='val_acc',
+                                            save_best_only=True)])
 
-
-model.save_weights('test_inception.h5')
-
-#model.load_weights('86-98f1_inception.h5')
+model.load_weights('InceptionV3.h5')
 
 predictions = model.predict(testX, batch_size=BATCH_SIZE)
-
-y_pred = np.argmax(predictions, axis=1)
 
 print(confusion_matrix(testY.argmax(axis=1), predictions.argmax(axis=1)))
 print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=lb.classes_))
 
-#plt.figure()
-#plt.ylabel("Loss (training and validation)")
-#plt.xlabel("Training Steps")
-#plt.ylim([0, 2])
-#plt.plot(H["loss"])
-#plt.plot(H["val_loss"])
+acc = H.history['acc']
+val_acc = H.history['val_acc']
+loss = H.history['loss']
+val_loss = H.history['val_loss']
 
-#plt.figure()
-#plt.ylabel("Accuracy (training and validation)")
-#plt.xlabel("Training Steps")
-#plt.ylim([0, 1])
-#plt.plot(H["accuracy"])
-#plt.plot(H["val_accuracy"])
-#plt.savefig('fig.png')
+epochs = range(1, len(acc) + 1)
+
+plt.plot(epochs, acc, 'b', label='Training accuracy')
+plt.plot(epochs, val_acc, 'r', label='Validation accuracy')
+plt.title('InceptionV3: Training and Validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.savefig('train_val_acc_inceptionV3' + '.jpeg')
+
+plt.figure()
+plt.plot(epochs, loss, 'b', label='Training loss')
+plt.plot(epochs, val_loss, 'r', label='Validation loss')
+plt.title('InceptionV3: Training and Validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.savefig('train_val_loss_inceptionV3' + '.jpeg')
